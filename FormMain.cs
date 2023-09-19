@@ -108,81 +108,81 @@ namespace WeChatCover
 
         public FormMain()
         {
-            this.InitializeComponent();
+            InitializeComponent();
 
-            Shown += (s1, e1) => this.Hide();
+            Shown += (s1, e1) => Hide();
 
             new Thread(() =>
             {
                 while (true)
                 {
-                    IntPtr p = GetForegroundWindow();
+                    IntPtr hForeground = GetForegroundWindow();
                     StringBuilder sbClassName = new StringBuilder(50);
-                    GetClassName(p, sbClassName, sbClassName.Capacity);
+                    GetClassName(hForeground, sbClassName, sbClassName.Capacity);
 
                     if (sbClassName.ToString().Contains("WeChatMainWndForPC"))
                     {
-                        this._weChatHandle = p;
+                        _weChatHandle = hForeground;
 
-                        if (this.Disposing || this.IsDisposed)
+                        if (Disposing || IsDisposed)
                             return;
 
-                        this.BeginInvoke(new MethodInvoker(() =>
+                        BeginInvoke(new MethodInvoker(() =>
                         {
-                            SetParent(this.Handle, IntPtr.Zero);
-                            this.Hide();
+                            SetParent(Handle, IntPtr.Zero);
+                            Hide();
                         }));
 
-                        GetWindowRect(p, out RECT rect);
+                        GetWindowRect(hForeground, out RECT rect);
                         //Debug.Print(rect.Left.ToString());
 
                         Bitmap bmp = new Bitmap(rect.Right - rect.Left, rect.Bottom - rect.Top);
                         using (Graphics g = Graphics.FromImage(bmp))
                             g.CopyFromScreen(rect.Left, rect.Top, 0, 0, bmp.Size);
 
-                        Bitmap bmpMosaic = this.Mosaic(bmp, 10);
+                        Bitmap bmpMosaic = Mosaic(bmp, 10);
 
-                        this.BeginInvoke(new MethodInvoker(() =>
+                        BeginInvoke(new MethodInvoker(() =>
                         {
-                            this.Size = bmp.Size;
-                            this.Location = new Point(0, 0);
-                            this.BackgroundImage = bmpMosaic;
+                            Size = bmp.Size;
+                            Location = new Point(0, 0);
+                            BackgroundImage = bmpMosaic;
                         }));
                     }
                     else
                     {
-                        if (this._weChatHandle == IntPtr.Zero)
+                        if (_weChatHandle == IntPtr.Zero)
                             continue;
 
-                        if (this.Disposing || this.IsDisposed)
+                        if (Disposing || IsDisposed)
                             return;
 
                         StringBuilder sbText = new StringBuilder(50);
-                        GetWindowText(p, sbText, sbText.Capacity);
-                        if (sbText.ToString().Contains("WeChatCover"))
+                        GetWindowText(hForeground, sbText, sbText.Capacity);
+                        if (sbText.ToString()=="WeChatCover")
                         {
-                            this.BeginInvoke(new MethodInvoker(() =>
+                            BeginInvoke(new MethodInvoker(() =>
                             {
-                                SetParent(this.Handle, IntPtr.Zero);
-                                SetForegroundWindow(this._weChatHandle);
-                                this.Hide();
+                                SetParent(Handle, IntPtr.Zero);
+                                SetForegroundWindow(_weChatHandle);
+                                Hide();
                             }));
                             continue;
                         }
 
-                        this.BeginInvoke(new MethodInvoker(() =>
+                        BeginInvoke(new MethodInvoker(() =>
                         {
                             IntPtr hActived = GetActiveWindow();
-                            this.Visible = true;
-                            SetParent(this.Handle, this._weChatHandle);
+                            Visible = true;
+                            SetParent(Handle, _weChatHandle);
                             SetActiveWindow(hActived);
                         }));
                     }
-                    Thread.Sleep(100);
+                    Thread.Sleep(300);
                 }
             }).Start();
 
-            this.SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
         }
     }
 }
