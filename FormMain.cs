@@ -102,10 +102,6 @@ namespace WeChatCover
 
         private IntPtr _weChatHandle;
 
-        private int _screenShotCount = 0;
-        // 快照更新间隔
-        private const int ScreenShotInterval = 30 * 1000;
-
         public FormMain()
         {
             InitializeComponent();
@@ -159,7 +155,7 @@ namespace WeChatCover
 
                         StringBuilder sbText = new StringBuilder(50);
                         GetWindowText(hForeground, sbText, sbText.Capacity);
-                        if (sbText.ToString()=="WeChatCover")
+                        if (sbText.ToString() == "WeChatCover")
                         {
                             BeginInvoke(new MethodInvoker(() =>
                             {
