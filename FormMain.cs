@@ -102,9 +102,7 @@ namespace WeChatCover
 
         private IntPtr _weChatHandle;
 
-        private int _screenShotCount = 0;
-        // 快照更新间隔
-        private const int ScreenShotInterval = 30 * 1000;
+        private readonly Font _ftNotice = new Font("微软雅黑", 80);
 
         public FormMain()
         {
@@ -159,7 +157,7 @@ namespace WeChatCover
 
                         StringBuilder sbText = new StringBuilder(50);
                         GetWindowText(hForeground, sbText, sbText.Capacity);
-                        if (sbText.ToString()=="WeChatCover")
+                        if (sbText.ToString() == "WeChatCover")
                         {
                             BeginInvoke(new MethodInvoker(() =>
                             {
@@ -183,6 +181,16 @@ namespace WeChatCover
             }).Start();
 
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            const string strNotice = "你瞅你妈呢？！";
+
+            SizeF szNotice = e.Graphics.MeasureString(strNotice, _ftNotice);
+            e.Graphics.DrawString(strNotice, _ftNotice, Brushes.Crimson, (Width - szNotice.Width) / 2, (Height - szNotice.Height) / 2);
         }
     }
 }
