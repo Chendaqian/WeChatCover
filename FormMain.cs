@@ -1,112 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
 using System.Drawing;
-using System.Runtime.InteropServices;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+
+using static WeChatCover.NativeCodes;
+using static WeChatCover.Utilities;
 
 namespace WeChatCover
 {
     public partial class FormMain : Form
     {
-        [DllImport("user32")]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32")]
-        private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
-
-        [DllImport("user32")]
-        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-        [DllImport("user32")]
-        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
-
-        [DllImport("user32")]
-        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpWindowText, int nMaxCount);
-
-        [DllImport("user32")]
-        private static extern IntPtr GetActiveWindow();
-
-        [DllImport("user32")]
-        private static extern IntPtr SetActiveWindow(IntPtr hWnd);
-
-        [DllImport("user32")]
-        private static extern int SetForegroundWindow(IntPtr hWnd);
-
-        private Bitmap Mosaic(Bitmap bmpOrigin, int radius)
-        {
-            Bitmap bmpResult = new Bitmap(bmpOrigin.Width, bmpOrigin.Height);
-
-            for (int y = radius; y < bmpOrigin.Height; y += radius * 2 + 1)
-            {
-                for (int x = radius; x < bmpOrigin.Width; x += radius * 2 + 1)
-                {
-                    int sumA = 0;
-                    int sumR = 0;
-                    int sumG = 0;
-                    int sumB = 0;
-                    int pixelCount = 0;
-
-                    for (int y1 = y - radius; y1 < y + radius + 1; ++y1)
-                    {
-                        if (y1 >= bmpOrigin.Height)
-                            break;
-
-                        for (int x1 = x - radius; x1 < x + radius + 1; ++x1)
-                        {
-                            if (x1 >= bmpOrigin.Width)
-                                break;
-
-                            Color pixel = bmpOrigin.GetPixel(x1, y1);
-                            sumA += pixel.A;
-                            sumR += pixel.R;
-                            sumG += pixel.G;
-                            sumB += pixel.B;
-                            ++pixelCount;
-                        }
-                    }
-
-                    int avgA = sumA / pixelCount;
-                    int avgR = sumR / pixelCount;
-                    int avgG = sumG / pixelCount;
-                    int avgB = sumB / pixelCount;
-
-                    Color newColor = Color.FromArgb(avgA, avgR, avgG, avgB);
-
-                    for (int y1 = y - radius; y1 < y + radius + 1; ++y1)
-                    {
-                        if (y1 >= bmpOrigin.Height)
-                            break;
-
-                        for (int x1 = x - radius; x1 < x + radius + 1; ++x1)
-                        {
-                            if (x1 >= bmpOrigin.Width)
-                                break;
-
-                            bmpResult.SetPixel(x1, y1, newColor);
-                        }
-                    }
-                }
-            }
-
-            return bmpResult;
-        }
-
-        public struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }
-
         private IntPtr _weChatHandle;
+        private List<IntPtr> _arrSubscriptionWndHandles = new List<IntPtr>();
 
         private readonly Font _ftNotice = new Font("微软雅黑", 80);
+        private readonly string _strNotice;
 
         public FormMain()
         {
             InitializeComponent();
+
+            _strNotice = ConfigurationManager.AppSettings["Notice"].Trim();
 
             Shown += (s1, e1) => Hide();
 
@@ -161,6 +79,8 @@ namespace WeChatCover
                         {
                             BeginInvoke(new MethodInvoker(() =>
                             {
+                                ShowWindows(_arrSubscriptionWndHandles, true);
+
                                 SetParent(Handle, IntPtr.Zero);
                                 SetForegroundWindow(_weChatHandle);
                                 Hide();
@@ -170,10 +90,14 @@ namespace WeChatCover
 
                         BeginInvoke(new MethodInvoker(() =>
                         {
+                            GetSubscriptionWndHandle();
+
                             IntPtr hActived = GetActiveWindow();
                             Visible = true;
                             SetParent(Handle, _weChatHandle);
                             SetActiveWindow(hActived);
+
+                            ShowWindows(_arrSubscriptionWndHandles, false);
                         }));
                     }
                     Thread.Sleep(300);
@@ -183,14 +107,48 @@ namespace WeChatCover
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
         }
 
+        private void GetSubscriptionWndHandle()
+        {
+            if (_weChatHandle == IntPtr.Zero)
+                return;
+
+            EnumWindows(EmProc, IntPtr.Zero);
+            return;
+
+            bool EmProc(IntPtr hWnd, IntPtr lParam)
+            {
+                StringBuilder sbClassName = new StringBuilder(50);
+                GetClassName(hWnd, sbClassName, sbClassName.Capacity);
+
+                if (sbClassName.ToString() != "CWebviewControlHostWnd")
+                    return true;
+
+                if (GetWindow(hWnd, GW_OWNER) != _weChatHandle)
+                    return true;
+
+                if (!_arrSubscriptionWndHandles.Contains(hWnd))
+                    _arrSubscriptionWndHandles.Add(hWnd);
+
+                return true;
+            }
+        }
+
+        private void ShowWindows(List<IntPtr> lstHandles, bool show)
+        {
+            // TODO:订阅号窗口被我直接干掉了，恢复订阅号窗口需要手动点订阅号
+            foreach (IntPtr hWnd in lstHandles)
+                SetWindowPos(hWnd, IntPtr.Zero, 0, 0, 0, 0, show ? SWP_SHOWWINDOW : SWP_NOACTIVATE);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
-            const string strNotice = "你瞅你妈呢？！";
+            if (string.IsNullOrEmpty(_strNotice))
+                return;
 
-            SizeF szNotice = e.Graphics.MeasureString(strNotice, _ftNotice);
-            e.Graphics.DrawString(strNotice, _ftNotice, Brushes.Crimson, (Width - szNotice.Width) / 2, (Height - szNotice.Height) / 2);
+            SizeF szNotice = e.Graphics.MeasureString(_strNotice, _ftNotice);
+            e.Graphics.DrawString(_strNotice, _ftNotice, Brushes.Crimson, (Width - szNotice.Width) / 2, (Height - szNotice.Height) / 2);
         }
     }
 }
