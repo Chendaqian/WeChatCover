@@ -149,5 +149,10 @@ namespace WeChatCover
             SizeF szNotice = e.Graphics.MeasureString(_strNotice, _ftNotice);
             e.Graphics.DrawString(_strNotice, _ftNotice, Brushes.Crimson, (Width - szNotice.Width) / 2, (Height - szNotice.Height) / 2);
         }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
     }
 }
