@@ -22,5 +22,17 @@ namespace WeChatCover.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Look")]
+        public string Notice {
+            get {
+                return ((string)(this["Notice"]));
+            }
+            set {
+                this["Notice"] = value;
+            }
+        }
     }
 }

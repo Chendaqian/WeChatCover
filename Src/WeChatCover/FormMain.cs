@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-
+using WeChatCover.Properties;
 using static WeChatCover.NativeCodes;
 using static WeChatCover.Utilities;
 
@@ -24,7 +23,7 @@ namespace WeChatCover
         {
             InitializeComponent();
 
-            _strNotice = ConfigurationManager.AppSettings["Notice"].Trim();
+            _strNotice = Settings.Default.Notice.Trim();
 
             Shown += (s1, e1) => Hide();
 
