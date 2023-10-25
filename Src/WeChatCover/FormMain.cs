@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Drawing;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+
 using WeChatCover.Properties;
+
 using static WeChatCover.NativeCodes;
 using static WeChatCover.Utilities;
 
@@ -52,8 +53,8 @@ namespace WeChatCover
                         //Debug.Print(rect.Left.ToString());
 
                         Bitmap bmp = new Bitmap(rect.Right - rect.Left, rect.Bottom - rect.Top);
-                        using (Graphics g = Graphics.FromImage(bmp))
-                            g.CopyFromScreen(rect.Left, rect.Top, 0, 0, bmp.Size);
+                        using Graphics g = Graphics.FromImage(bmp);
+                        g.CopyFromScreen(rect.Left, rect.Top, 0, 0, bmp.Size);
 
                         Bitmap bmpMosaic = Mosaic(bmp, 10);
 
@@ -62,6 +63,9 @@ namespace WeChatCover
                             Size = bmp.Size;
                             Location = new Point(0, 0);
                             BackgroundImage = bmpMosaic;
+
+                            bmp.Dispose();
+                            bmpMosaic.Dispose();
                         }));
                     }
                     else
@@ -152,7 +156,7 @@ namespace WeChatCover
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            Environment.Exit(0);
         }
     }
 }
