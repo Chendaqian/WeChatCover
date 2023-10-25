@@ -52,7 +52,7 @@ namespace WeChatCover
                         GetWindowRect(hForeground, out RECT rect);
                         //Debug.Print(rect.Left.ToString());
 
-                        Bitmap bmp = new Bitmap(rect.Right - rect.Left, rect.Bottom - rect.Top);
+                        using Bitmap bmp = new Bitmap(rect.Right - rect.Left, rect.Bottom - rect.Top);
                         using Graphics g = Graphics.FromImage(bmp);
                         g.CopyFromScreen(rect.Left, rect.Top, 0, 0, bmp.Size);
 
@@ -60,12 +60,10 @@ namespace WeChatCover
 
                         BeginInvoke(new MethodInvoker(() =>
                         {
-                            Size = bmp.Size;
+                            Size = bmpMosaic.Size;
                             Location = new Point(0, 0);
+                            BackgroundImage?.Dispose();
                             BackgroundImage = bmpMosaic;
-
-                            bmp.Dispose();
-                            bmpMosaic.Dispose();
                         }));
                     }
                     else
