@@ -20,6 +20,20 @@ namespace WeChatCover
         private readonly Font _ftNotice = new Font("微软雅黑", 80);
         private readonly string _strNotice;
 
+        private readonly HashSet<string> ClassNameBlackList = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "ImagePreviewWnd",
+            "FileListMgrWnd",
+            "IntermediateD3DWindow",
+            "FileManagerWnd",
+            "AudioWnd",
+            "VideoLayerWnd",
+            "BackupRestoreEntryWnd",
+            "ExportDataWnd",
+            "BackupRestoreWnd",
+            "ContactManagerWindow"
+        };
+
         public FormMain()
         {
             InitializeComponent();
@@ -87,7 +101,7 @@ namespace WeChatCover
                         if (Disposing || IsDisposed)
                             return;
 
-                        if (sbClassName.ToString().Contains("ImagePreviewWnd"))
+                        if (ClassNameBlackList.Contains(sbClassName.ToString().Replace(" ",string.Empty)))
                             continue;
 
                         StringBuilder sbText = new StringBuilder(50);
