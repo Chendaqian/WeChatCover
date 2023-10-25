@@ -32,6 +32,12 @@ namespace WeChatCover
             {
                 while (true)
                 {
+                    if (contextMenuStrip1.Visible)
+                    {
+                        Thread.Sleep(300);
+                        continue;
+                    }
+
                     IntPtr hForeground = GetForegroundWindow();
                     StringBuilder sbClassName = new StringBuilder(50);
                     GetClassName(hForeground, sbClassName, sbClassName.Capacity);
@@ -50,13 +56,20 @@ namespace WeChatCover
                         }));
 
                         GetWindowRect(hForeground, out RECT rect);
-                        //Debug.Print(rect.Left.ToString());
 
                         using Bitmap bmp = new Bitmap(rect.Right - rect.Left, rect.Bottom - rect.Top);
                         using Graphics g = Graphics.FromImage(bmp);
                         g.CopyFromScreen(rect.Left, rect.Top, 0, 0, bmp.Size);
 
                         Bitmap bmpMosaic = Mosaic(bmp, 10);
+
+                        using Graphics gBg = Graphics.FromImage(bmpMosaic);
+
+                        if (!string.IsNullOrEmpty(_strNotice))
+                        {
+                            SizeF szNotice = gBg.MeasureString(_strNotice, _ftNotice);
+                            gBg.DrawString(_strNotice, _ftNotice, Brushes.Crimson, (Width - szNotice.Width) / 2, (Height - szNotice.Height) / 2);
+                        }
 
                         BeginInvoke(new MethodInvoker(() =>
                         {
@@ -141,19 +154,9 @@ namespace WeChatCover
                 SetWindowPos(hWnd, IntPtr.Zero, 0, 0, 0, 0, show ? SWP_SHOWWINDOW : SWP_NOACTIVATE);
         }
 
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-
-            if (string.IsNullOrEmpty(_strNotice))
-                return;
-
-            SizeF szNotice = e.Graphics.MeasureString(_strNotice, _ftNotice);
-            e.Graphics.DrawString(_strNotice, _ftNotice, Brushes.Crimson, (Width - szNotice.Width) / 2, (Height - szNotice.Height) / 2);
-        }
-
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            notifyIcon1.Visible = false;
             Environment.Exit(0);
         }
     }
