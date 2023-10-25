@@ -87,6 +87,9 @@ namespace WeChatCover
                         if (Disposing || IsDisposed)
                             return;
 
+                        if (sbClassName.ToString().Contains("ImagePreviewWnd"))
+                            continue;
+
                         StringBuilder sbText = new StringBuilder(50);
                         GetWindowText(hForeground, sbText, sbText.Capacity);
                         if (sbText.ToString() == "WeChatCover")
